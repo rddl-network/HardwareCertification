@@ -2,11 +2,8 @@
 
 const bip39 = require('bip39');
 const { pki, random } = require('node-forge');
-const fs = require('fs');
-const crypto = require('crypto');
 
-// Define curve that is compatible with Mender
-const curve = 'ed25519';
+const convert = require('./convert.js');
 
 /**
  * 1. Generate mnemonic
@@ -14,58 +11,41 @@ const curve = 'ed25519';
  */
 
 const uBoot = {
-  generateMnemonic() {
-    return bip39.generateMnemonic();
+  generateMnemonic(bits = 128) {
+    if (bits === 128 || bits === 256) {
+      return bip39.generateMnemonic(bits);
+    } else {
+      console.log('Error: Invalid entropy');
+      return 1;
+    }
   },
   generateSeed(mnemonic) {
     // Sanitise input
-    // if (mnemonic.trim().split(/\s+/g).length >= 12) {
-    return bip39.mnemonicToSeedSync(mnemonic).toString('hex');
-    // } else {
-    //   return false;
-    // }
+    if (mnemonic.trim().split(/\s+/g).length >= 12) {
+      return bip39.mnemonicToSeedSync(mnemonic).toString('hex');
+    } else {
+      console.log('Error: Invalid mnemonic');
+      return 1;
+    }
   },
-  generateHash(input) {
-    return crypto.createHash('sha256').update(input).digest('hex');
-  },
-  hexToBytes(hex) {
-    for (var bytes = [], c = 0; c < hex.length; c += 2)
-      bytes.push(parseInt(hex.substr(c, 2), 16));
-    return bytes;
-  },
-  hexToUint8Array(hex) {
-    let unsignedIntegers = hex.match(/[\dA-F]{2}/gi).map(function (s) {
-      return parseInt(s, 16);
+  generateRsaKeypair(seed) {
+    const prng = random.createInstance();
+    prng.seedFileSync = () => seed;
+    const { privateKey, publicKey } = pki.rsa.generateKeyPair({
+      bits: 4096,
+      prng,
+      workers: -1,
     });
-    return new Uint8Array(unsignedIntegers);
+    return { privateKey, publicKey };
   },
-  generateKeypair(seed) {
-    // const prng = random.createInstance();
-    // prng.seedFileSync = () => seed;
-    // const { privateKey, publicKey } = pki.rsa.generateKeyPair({
-    //   bits: 4096,
-    //   prng,
-    //   workers: -1,
-    // });
-    console.log(seed);
-    console.log(this.hexToUint8Array(seed));
+  generateEd25519Keypair(seed) {
     const { privateKey, publicKey } = pki.ed25519.generateKeyPair({
-      seed: this.hexToUint8Array(seed),
+      seed: convert.hexToUint8Array(seed),
     });
-    console.log(privateKey);
-    // fs.writeFileSync('./priv.key', JSON.stringify(privateKey.data));
-    // fs.writeFileSync('./pub.key', JSON.stringify(publicKey.data));
-
-    console.log(publicKey);
-    // console.log(publicKey.toString());
+    return { privateKey, publicKey };
   },
-  generatecryptoId() {
-    // console.log(crypto.subtle.digest('SHA-256', 'test'));
-    console.log(crypto.createHash('sha256').update('input').digest('hex'));
-
-    // const ecdhObj = crypto.createECDH(curve);
-    // crypto.ecdhObj.generateKeys();
-    // return ecdhObj;
+  ed25519KeypairFromMnemonic(mnemonic) {
+    return this.generateEd25519Keypair(this.generateSeed(mnemonic));
   },
 };
 
