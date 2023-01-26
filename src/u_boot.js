@@ -46,7 +46,7 @@ const uBoot = {
     });
   },
   verifyMessage(data, signature, publicKey) {
-    var verified = pki.ed25519.verify({
+    const verified = pki.ed25519.verify({
       message: data,
       encoding: 'binary',
       signature: signature,
