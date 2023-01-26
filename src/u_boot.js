@@ -46,13 +46,12 @@ const uBoot = {
     });
   },
   verifyMessage(data, signature, publicKey) {
-    const verified = pki.ed25519.verify({
+    return pki.ed25519.verify({
       message: data,
       encoding: 'binary',
       signature: signature,
       publicKey: publicKey,
     });
-    return verified;
   },
 };
 
