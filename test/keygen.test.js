@@ -4,13 +4,13 @@ const uBoot = require('../src/u_boot.js');
 
 describe('Runs through cryptography steps', () => {
   it('cannot generate mnemonic - invalid entropy', () => {
-    assert.equal(uBoot.generateMnemonic(384), 1);
+    assert.deepEqual(uBoot.generateMnemonic(384), 1);
   });
   it('generates mnemonic', () => {
     assert.isString(uBoot.generateMnemonic(256));
   });
   it('cannot generate seed - invalid mnemonic', () => {
-    assert.equal(uBoot.generateSeed('abcd'), 1);
+    assert.deepEqual(uBoot.generateSeed('abcd'), 1);
   });
   it('generates seed', () => {
     assert.isString(uBoot.generateSeed(uBoot.generateMnemonic()));
@@ -31,7 +31,7 @@ describe('Runs through cryptography steps', () => {
   it('recovers seed', () => {
     const mnemonic1 = uBoot.generateMnemonic();
     const seed1 = uBoot.generateSeed(mnemonic1);
-    assert.equal(seed1, uBoot.generateSeed(mnemonic1));
+    assert.deepEqual(seed1, uBoot.generateSeed(mnemonic1));
   });
   it('cannot recover keypair - wrong mnemonic', () => {
     const mnemonic1 = uBoot.generateMnemonic();
@@ -51,11 +51,11 @@ describe('Runs through cryptography steps', () => {
     const mnemonic1 = uBoot.generateMnemonic();
     const keypair1 = uBoot.ed25519KeypairFromMnemonic(mnemonic1);
     const keypair2 = uBoot.ed25519KeypairFromMnemonic(mnemonic1);
-    assert.equal(
+    assert.deepEqual(
       keypair1.privateKey.toString('hex'),
       keypair2.privateKey.toString('hex'),
     );
-    assert.equal(
+    assert.deepEqual(
       keypair1.publicKey.toString('hex'),
       keypair2.publicKey.toString('hex'),
     );
