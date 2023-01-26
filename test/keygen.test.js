@@ -22,38 +22,102 @@ describe('Runs through cryptography steps', () => {
     assert.isString(privateKey.toString('hex'));
     assert.isString(publicKey.toString('hex'));
   });
-  it('cannot recover seed - wrong mnemonic', () => {});
-
-  it('cannot sign message - wrong keypair', () => {});
-
-  it('uses a mnemonic as a key to generate a seed', () => {
-    //    const mnemonic = uBoot.generateMnemonic();
-    const oldMnemonic =
-      'govern join crop mistake dry point execute famous kit method hedgehog hold meat critic section gauge menu famous journey frog addict powder dentist trip';
-
-    const { privateKey, publicKey } =
-      uBoot.ed25519KeypairFromMnemonic(oldMnemonic); // uBoot.generateSeed(mnemonic);
-    // const oldSeed =
-    //   '6a2b64b02506f4f6138fd819d0282c800eacd6dc809505f6cb00462a618b307cc0043993a21299ed7fe9342c57a06b82f80d2f301bd7b0f87a6bc9953012af96';
-    console.log(privateKey.toString('hex'));
-    console.log(publicKey.toString('hex'));
+  it('cannot recover seed - wrong mnemonic', () => {
+    const mnemonic1 = uBoot.generateMnemonic();
+    const seed1 = uBoot.generateSeed(mnemonic1);
+    const mnemonic2 = uBoot.generateMnemonic();
+    assert.notDeepEqual(seed1, uBoot.generateSeed(mnemonic2));
   });
-  it('can`t recover from wrong mnemonic', () => {
-    const oldMnemonic =
-      'govern join crop mistake dry point execute famous kit method hedgehog hold meat critic section gauge menu famous journey frog addict powder dentist trip';
-    const oldSeed =
-      '6a2b64b02506f4f6138fd819d0282c800eacd6dc809505f6cb00462a618b307cc0043993a21299ed7fe9342c57a06b82f80d2f301bd7b0f87a6bc9953012af96';
-    assert.notEqual(oldSeed, uBoot.generateSeed(oldMnemonic));
-    // const newMnemonic = uBoot.generateMnemonic();
+  it('recovers seed', () => {
+    const mnemonic1 = uBoot.generateMnemonic();
+    const seed1 = uBoot.generateSeed(mnemonic1);
+    assert.equal(seed1, uBoot.generateSeed(mnemonic1));
   });
-  it('can recover from mnemonic', () => {
-    const oldMnemonic =
-      'join govern crop mistake dry point execute famous kit method hedgehog hold meat critic section gauge menu famous journey frog addict powder dentist trip';
-    const oldSeed =
-      '6a2b64b02506f4f6138fd819d0282c800eacd6dc809505f6cb00462a618b307cc0043993a21299ed7fe9342c57a06b82f80d2f301bd7b0f87a6bc9953012af96';
-    assert.equal(oldSeed, uBoot.generateSeed(oldMnemonic));
-    // const newMnemonic = uBoot.generateMnemonic();
+  it('cannot recover keypair - wrong mnemonic', () => {
+    const mnemonic1 = uBoot.generateMnemonic();
+    const keypair1 = uBoot.ed25519KeypairFromMnemonic(mnemonic1);
+    const mnemonic2 = uBoot.generateMnemonic();
+    const keypair2 = uBoot.ed25519KeypairFromMnemonic(mnemonic2);
+    assert.notDeepEqual(
+      keypair1.privateKey.toString('hex'),
+      keypair2.privateKey.toString('hex'),
+    );
+    assert.notDeepEqual(
+      keypair1.publicKey.toString('hex'),
+      keypair2.publicKey.toString('hex'),
+    );
+  });
+  it('recovers keypair', () => {
+    const mnemonic1 = uBoot.generateMnemonic();
+    const keypair1 = uBoot.ed25519KeypairFromMnemonic(mnemonic1);
+    const keypair2 = uBoot.ed25519KeypairFromMnemonic(mnemonic1);
+    assert.equal(
+      keypair1.privateKey.toString('hex'),
+      keypair2.privateKey.toString('hex'),
+    );
+    assert.equal(
+      keypair1.publicKey.toString('hex'),
+      keypair2.publicKey.toString('hex'),
+    );
+  });
+  it('cannot verify messages - wrong keypair', () => {
+    const keypairProvisioned = uBoot.ed25519KeypairFromMnemonic(
+      uBoot.generateMnemonic(),
+    );
+    const keypairGenerated = uBoot.ed25519KeypairFromMnemonic(
+      uBoot.generateMnemonic(),
+    );
+    const keypairFalse = uBoot.ed25519KeypairFromMnemonic(
+      uBoot.generateMnemonic(),
+    );
+    const signedProvisioned = uBoot.signMessage(
+      keypairProvisioned.publicKey,
+      keypairGenerated.privateKey,
+    );
+    const signedGenerated = uBoot.signMessage(
+      keypairGenerated.publicKey,
+      keypairProvisioned.privateKey,
+    );
+    const verifyHasProvisioned = uBoot.verifyMessage(
+      keypairProvisioned.publicKey,
+      signedProvisioned,
+      keypairFalse.publicKey,
+    );
+    const verifyHasNewId = uBoot.verifyMessage(
+      keypairGenerated.publicKey,
+      signedGenerated,
+      keypairFalse.publicKey,
+    );
+    assert.isFalse(verifyHasProvisioned);
+    assert.isFalse(verifyHasNewId);
+  });
+  it('verifies messages', () => {
+    const keypairProvisioned = uBoot.ed25519KeypairFromMnemonic(
+      uBoot.generateMnemonic(),
+    );
+    const keypairGenerated = uBoot.ed25519KeypairFromMnemonic(
+      uBoot.generateMnemonic(),
+    );
+    const signedProvisioned = uBoot.signMessage(
+      keypairProvisioned.publicKey,
+      keypairGenerated.privateKey,
+    );
+    const signedGenerated = uBoot.signMessage(
+      keypairGenerated.publicKey,
+      keypairProvisioned.privateKey,
+    );
+    const verifyHasProvisioned = uBoot.verifyMessage(
+      keypairProvisioned.publicKey,
+      signedProvisioned,
+      keypairGenerated.publicKey,
+    );
+    const verifyHasNewId = uBoot.verifyMessage(
+      keypairGenerated.publicKey,
+      signedGenerated,
+      keypairProvisioned.publicKey,
+    );
+    assert.isTrue(verifyHasProvisioned);
+    assert.isTrue(verifyHasNewId);
   });
 });
-describe('Runs through certification', () => {});
 

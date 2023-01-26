@@ -1,7 +1,7 @@
 'use strict';
 
 const bip39 = require('bip39');
-const { pki, random } = require('node-forge');
+const { pki, random, pss } = require('node-forge');
 
 const convert = require('./convert.js');
 
@@ -28,16 +28,16 @@ const uBoot = {
       return 1;
     }
   },
-  generateRsaKeypair(seed) {
-    const prng = random.createInstance();
-    prng.seedFileSync = () => seed;
-    const { privateKey, publicKey } = pki.rsa.generateKeyPair({
-      bits: 4096,
-      prng,
-      workers: -1,
-    });
-    return { privateKey, publicKey };
-  },
+  // generateRsaKeypair(seed) {
+  //   const prng = random.createInstance();
+  //   prng.seedFileSync = () => seed;
+  //   const { privateKey, publicKey } = pki.rsa.generateKeyPair({
+  //     bits: 4096,
+  //     prng,
+  //     workers: -1,
+  //   });
+  //   return { privateKey, publicKey };
+  // },
   generateEd25519Keypair(seed) {
     const { privateKey, publicKey } = pki.ed25519.generateKeyPair({
       seed: convert.hexToUint8Array(seed),
@@ -45,7 +45,29 @@ const uBoot = {
     return { privateKey, publicKey };
   },
   ed25519KeypairFromMnemonic(mnemonic) {
-    return this.generateEd25519Keypair(this.generateSeed(mnemonic));
+    const { privateKey, publicKey } = this.generateEd25519Keypair(
+      this.generateSeed(mnemonic),
+    );
+    return {
+      'privateKey': privateKey,
+      'publicKey': publicKey,
+    };
+  },
+  signMessage(data, privateKey) {
+    return pki.ed25519.sign({
+      message: data,
+      encoding: 'binary',
+      privateKey: privateKey,
+    });
+  },
+  verifyMessage(data, signature, publicKey) {
+    var verified = pki.ed25519.verify({
+      message: data,
+      encoding: 'binary',
+      signature: signature,
+      publicKey: publicKey,
+    });
+    return verified;
   },
 };
 
