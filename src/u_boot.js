@@ -1,14 +1,9 @@
 'use strict';
 
 const bip39 = require('bip39');
-const { pki, random, pss } = require('node-forge');
+const { pki } = require('node-forge');
 
 const convert = require('./convert.js');
-
-/**
- * 1. Generate mnemonic
- * 2. Create cryptographic ID using Edwards curve (ed25519)
- */
 
 const uBoot = {
   generateMnemonic(bits = 128) {
@@ -28,16 +23,6 @@ const uBoot = {
       return 1;
     }
   },
-  // generateRsaKeypair(seed) {
-  //   const prng = random.createInstance();
-  //   prng.seedFileSync = () => seed;
-  //   const { privateKey, publicKey } = pki.rsa.generateKeyPair({
-  //     bits: 4096,
-  //     prng,
-  //     workers: -1,
-  //   });
-  //   return { privateKey, publicKey };
-  // },
   generateEd25519Keypair(seed) {
     const { privateKey, publicKey } = pki.ed25519.generateKeyPair({
       seed: convert.hexToUint8Array(seed),
